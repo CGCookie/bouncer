@@ -22,7 +22,7 @@ def fancy_report(label, data):
     label = f'{label}{label_spaces}'[:max(len(label), label_width)]
 
     if not data:
-        print(f'{check} {label} {result}')
+        print(f'{check} {label} ...(nothing found)...')
 
     elif type(data) is list:
         data = sorted(data)
@@ -32,7 +32,7 @@ def fancy_report(label, data):
             label = label_spaces
 
     else:
-        print(f'{check} {label} {result}')
+        print(f'{check} {label} {data}')
 
 
 print(f'results')
