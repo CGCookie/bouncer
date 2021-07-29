@@ -53,11 +53,72 @@ class BlenderMarket_Tester(bpy.types.Operator):
         return {'FINISHED'}
 
 
+# layout = self.layout
+# window = context.window
+# screen = context.screen
+# TOPBAR_MT_editor_menus.draw_collapsible(context, layout)
+# layout.separator()
+# if not screen.show_fullscreen:
+#     layout.template_ID_tabs(
+#         window, "workspace",
+#         new="workspace.add",
+#         menu="TOPBAR_MT_workspace_menu",
+#     )
+# else:
+#     layout.operator(
+#         "screen.back_to_previous",
+#         icon='SCREEN_BACK',
+#         text="Back to Previous",
+#     )
+
+
+
+override_orig = None
+def override_topbar():
+    global override_orig
+    undo_override_topbar()
+    def new_draw_left(self, context):
+        layout = self.layout
+        layout.operator('cgcookie.blendermarket_tester', text='', icon='SCRIPTPLUGINS')
+        override_orig(self, context)
+    override_orig = bpy.types.TOPBAR_HT_upper_bar.draw_left
+    bpy.types.TOPBAR_HT_upper_bar.draw_left = new_draw_left
+
+def undo_override_topbar():
+    global override_orig
+    if not override_orig: return
+    bpy.types.TOPBAR_HT_upper_bar.draw_left = override_orig
+    override_orig = None
+
+
+# class TOPBAR_HT_upper_bar(bpy.types.Header):
+#     bl_space_type = 'TOPBAR'
+
+#     def draw(self, context):
+#         layout = self.layout
+
+#         # Allow calling this menu directly (this might not be a header area).
+#         if getattr(context.area, "show_menus", False):
+#             layout.menu("TOPBAR_MT_app", text="", icon='BLENDER')
+#         else:
+#             layout.menu("TOPBAR_MT_app", text="Blender")
+
+#         layout.menu("TOPBAR_MT_file")
+#         layout.menu("TOPBAR_MT_edit")
+
+#         layout.menu("TOPBAR_MT_render")
+
+#         layout.menu("TOPBAR_MT_window")
+#         layout.menu("TOPBAR_MT_help")
+
+
 def register():
     bpy.utils.register_class(BlenderMarket_Tester)
+    override_topbar()
 
 def unregister():
     bpy.utils.unregister_class(BlenderMarket_Tester)
+    undo_override_topbar()
 
 if __name__ == "__main__":
     register()
