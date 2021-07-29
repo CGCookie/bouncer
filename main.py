@@ -1,12 +1,31 @@
+'''
+Copyright (C) 2021 CG Cookie
+http://cgcookie.com
+hello@cgcookie.com
+
+Created by Jonathan Denning and Matthew Muldoon
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+'''
+
 import os
 import re
 import bpy
 import json
 
 config = {
-    # 'path to dictionary': os.path.dirname(os.path.abspath(__file__)),
-    # 'path to dictionary': 'C:\\Users\\homestation\\Downloads\\market-testers-main\\market-testers-main',
-    'path to dictionary': '/home/jon/projects/market-testers',
+    'path': os.path.dirname(os.path.abspath(__file__)),
 
     'reporting options': {
         'label width': 20,
@@ -75,13 +94,13 @@ label_spaces = ' '*label_width
 # english words from https://github.com/dwyl/english-words
 english_words = {
     re.sub(r'\d', '', word.strip().lower())
-    for word in open(os.path.join(config['path to dictionary'], 'words.txt'), 'rt').read().splitlines()
+    for word in open(os.path.join(config['path'], 'words.txt'), 'rt').read().splitlines()
     if word.strip()
 }
 def good_spelling(name):
     return all(
         part in english_words
-        for part in re.split(r' |_|-|\(|\)|,|\.|\d+', name.strip().lower())
+        for part in re.split(r' |_|-|\(|\)|,|\.|\d+|<|>', name.strip().lower())
         if part
     )
 
@@ -122,113 +141,126 @@ class Report:
         else:
             self.print(f'{check} {label} {data}')
 
-
-report = Report()
-report.print(f'Bouncer Report\n')
-report.hr()
-
-
-if config['unpacked images']['check']:
-    unpacked_images = [
-        img
-        for img in bpy.data.images
-        if img.filepath and img.users and not img.packed_file
-    ]
-    if config['unpacked images']['ok if file exists']:
-        unpacked_images = [
-            img
-            for img in unpacked_images
-            if bad_file(img.filepath)
-        ]
-    unpacked_images = [
-        f'{img.name}: {img.filepath}'
-        for img in unpacked_images
-    ]
-    report.add_result('unpacked images', unpacked_images)
-
-if config['orphaned images']['check']:
-    orphaned_images = [
-        f'{img.name}: {img.filepath}'
-        for img in bpy.data.images
-        if not img.users
-    ]
-    report.add_result('orphaned images', orphaned_images)
-
-if config['library images']['check']:
-    library_images = [
-        f'{img.name}: {img.library.filepath}'
-        for img in bpy.data.images
-        if img.library and (bad_file(img.filepath) or bad_file(img.library.filepath))
-    ]
-    report.add_result('library images', library_images)
-
-if config['object names']['check avoided'] or config['object names']['check spelling']:
-    types = config['object names']['types']
-    regexes = config['object names']['regexes']
-    objs = [obj for obj in bpy.data.objects if obj.type in types]
-    bad_words = []
-    if config['object names']['check avoided']:
-        bad_words += [
-            f'{obj.name}'
-            for obj in objs
-            if any(re.search(regex, obj.name) for regex in regexes)
-        ]
-    if config['object names']['check spelling']:
-        bad_words = [
-            f'{obj.name}'
-            for obj in objs
-            if not good_spelling(obj.name)
-        ]
-    report.add_result('object names', bad_words)
-
-if config['material names']['check avoided'] or config['material names']['check spelling']:
-    regexes = config['material names']['regexes']
-    bad_words = []
-    if config['material names']['check avoided']:
-        bad_words += [
-            f'{mat.name}'
-            for mat in bpy.data.materials
-            if any(re.search(regex, mat.name) for regex in regexes)
-        ]
-    if config['material names']['check spelling']:
-        bad_words = [
-            f'{mat.name}'
-            for mat in bpy.data.materials
-            if not good_spelling(mat.name)
-        ]
-    report.add_result('material names', bad_words)
-
-if config['single image BSDF']['check']:
-    materials = [
-        f'{material.name}'
-        for material in bpy.data.materials
-        if material.node_tree
-        for node in material.node_tree.nodes
-        if node.type == 'BSDF_PRINCIPLED' and sum(
-            1 if inp.is_linked and inp.links[0].from_node.type == 'TEX_IMAGE' else 0
-            for inp in node.inputs
-        ) == 1
-    ]
-    report.add_result('single image BSDF', materials)
-
-report.hr()
-report.print(f'\ndone!')
+    @staticmethod
+    def run():
+        report = Report()
+        report.print(f'Bouncer Report\n')
 
 
-# steps
-# - create new window
-# - switch to text editor in new window
-# - create new text block
-# - add content to text editor
-# - open new text block in text editor
-# - scroll text editor to top
+        ##########################################
+        # the following are considered errors
 
-bpy.ops.wm.window_new()
-win = bpy.data.window_managers['WinMan'].windows[-1]
-win.screen.areas[0].type = 'TEXT_EDITOR'
-txt = bpy.data.texts.new('Bouncer Report')
-txt.from_string(str(report))
-win.screen.areas[0].spaces[0].text = txt
-win.screen.areas[0].spaces[0].top = 0
-win.screen.areas[0].spaces[0].show_syntax_highlight = False
+        report.hr()
+
+
+        if config['unpacked images']['check']:
+            unpacked_images = [
+                img
+                for img in bpy.data.images
+                if img.filepath and img.users and not img.packed_file
+            ]
+            if config['unpacked images']['ok if file exists']:
+                unpacked_images = [
+                    img
+                    for img in unpacked_images
+                    if bad_file(img.filepath)
+                ]
+            unpacked_images = [
+                f'{img.name}: {img.filepath}'
+                for img in unpacked_images
+            ]
+            report.add_result('unpacked images', unpacked_images)
+
+        if config['orphaned images']['check']:
+            orphaned_images = [
+                f'{img.name}: {img.filepath}'
+                for img in bpy.data.images
+                if not img.users
+            ]
+            report.add_result('orphaned images', orphaned_images)
+
+        if config['library images']['check']:
+            library_images = [
+                f'{img.name}: {img.library.filepath}'
+                for img in bpy.data.images
+                if img.library and (bad_file(img.filepath) or bad_file(img.library.filepath))
+            ]
+            report.add_result('library images', library_images)
+
+
+
+        ############################################
+        # the following are considered warnings
+
+        report.hr()
+
+        if config['object names']['check avoided'] or config['object names']['check spelling']:
+            types = config['object names']['types']
+            regexes = config['object names']['regexes']
+            objs = [obj for obj in bpy.data.objects if obj.type in types]
+            bad_words = []
+            if config['object names']['check avoided']:
+                bad_words += [
+                    f'{obj.name}'
+                    for obj in objs
+                    if any(re.search(regex, obj.name) for regex in regexes)
+                ]
+            if config['object names']['check spelling']:
+                bad_words = [
+                    f'{obj.name}'
+                    for obj in objs
+                    if not good_spelling(obj.name)
+                ]
+            report.add_result('object names', bad_words)
+
+        if config['material names']['check avoided'] or config['material names']['check spelling']:
+            regexes = config['material names']['regexes']
+            bad_words = []
+            if config['material names']['check avoided']:
+                bad_words += [
+                    f'{mat.name}'
+                    for mat in bpy.data.materials
+                    if any(re.search(regex, mat.name) for regex in regexes)
+                ]
+            if config['material names']['check spelling']:
+                bad_words = [
+                    f'{mat.name}'
+                    for mat in bpy.data.materials
+                    if not good_spelling(mat.name)
+                ]
+            report.add_result('material names', bad_words)
+
+        if config['single image BSDF']['check']:
+            materials = [
+                f'{material.name}'
+                for material in bpy.data.materials
+                if material.node_tree
+                for node in material.node_tree.nodes
+                if node.type == 'BSDF_PRINCIPLED' and sum(
+                    1 if inp.is_linked and inp.links[0].from_node.type == 'TEX_IMAGE' else 0
+                    for inp in node.inputs
+                ) == 1
+            ]
+            report.add_result('single image BSDF', materials)
+
+        report.hr()
+        report.print(f'\ndone!')
+
+
+        # steps
+        # - create new window
+        # - switch to text editor in new window
+        # - create new text block
+        # - add content to text editor
+        # - open new text block in text editor
+        # - scroll text editor to top
+
+        bpy.ops.wm.window_new()
+        win = bpy.data.window_managers['WinMan'].windows[-1]
+        win.screen.areas[0].type = 'TEXT_EDITOR'
+        txt = bpy.data.texts.new('Bouncer Report')
+        txt.from_string(str(report))
+        win.screen.areas[0].spaces[0].text = txt
+        win.screen.areas[0].spaces[0].top = 0
+        win.screen.areas[0].spaces[0].show_syntax_highlight = False
 
