@@ -124,7 +124,7 @@ class Report:
 
 
 report = Report()
-report.print('Bouncer Report')
+report.print(f'Bouncer Report\n')
 report.hr()
 
 
@@ -211,8 +211,8 @@ if config['single image BSDF']['check']:
     ]
     report.add_result('single image BSDF', materials)
 
-report.print(f'\n')
-report.print(f'done!')
+report.hr()
+report.print(f'\ndone!')
 
 
 # steps
