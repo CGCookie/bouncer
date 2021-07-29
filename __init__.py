@@ -30,10 +30,6 @@ bl_info = {
     "version":     (0, 0, 1),
     "blender":     (2, 83, 0),
     "location":    "View 3D > Header",
-    # "warning":     "Alpha",                   # used for warning icon and text in addons panel
-    # "warning":     "Beta",
-    # "warning":     "Release Candidate 1",
-    # "warning":     "Release Candidate 2",
     "doc_url":     "https://github.com/CGCookie/market-testers/blob/main/README.md",
     "tracker_url": "https://github.com/CGCookie/market-testers/issues",
     "category":    "3D View",
@@ -90,26 +86,6 @@ def undo_override_topbar():
     bpy.types.TOPBAR_HT_upper_bar.draw_left = override_orig
     override_orig = None
 
-
-# class TOPBAR_HT_upper_bar(bpy.types.Header):
-#     bl_space_type = 'TOPBAR'
-
-#     def draw(self, context):
-#         layout = self.layout
-
-#         # Allow calling this menu directly (this might not be a header area).
-#         if getattr(context.area, "show_menus", False):
-#             layout.menu("TOPBAR_MT_app", text="", icon='BLENDER')
-#         else:
-#             layout.menu("TOPBAR_MT_app", text="Blender")
-
-#         layout.menu("TOPBAR_MT_file")
-#         layout.menu("TOPBAR_MT_edit")
-
-#         layout.menu("TOPBAR_MT_render")
-
-#         layout.menu("TOPBAR_MT_window")
-#         layout.menu("TOPBAR_MT_help")
 
 
 def register():
