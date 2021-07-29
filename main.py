@@ -34,20 +34,21 @@ config = {
     #########################################################
     # the following configure the various tests performed
 
-    'unpacked images': {
+    'unpacked images': {            # checks that each image is either packed or exists as external file
         'check': True,
         'ok if file exists': True,  # True=ignore warning against if image exists
     },
 
-    'orphaned images': {
+    'orphaned images': {            # checks for orphaned images (an image with no user)
         'check': True,
     },
 
-    'library images': {
+    'missing libraries': {          # checks that all linked libraries exist
         'check': True,
     },
 
-    'object names': {       # checks bpy.data.objects for avoided names (standard Blender names, duplicates, etc.---should have a unique, descriptive name) or misspellings
+    'object names': {               # checks bpy.data.objects for avoided names (standard Blender names, duplicates,
+                                    # etc.---should have a unique, descriptive name) or misspellings
         'check avoided': True,
         'check spelling': True,
         'types': [          # check only specific types of objects
@@ -60,7 +61,7 @@ config = {
             'ARMATURE',
             'SURFACE',
         ],
-        'regexes': [        # these are regular expressions to check against names
+        'regexes': [                # these are regular expressions to check against names
             r'^Plane$',
             r'^Cube$',
             r'^Circle$',
@@ -70,20 +71,20 @@ config = {
             r'^Cone$',
             r'^Torus$',
             r'^Empty$',
-            r'\.\d\d\d$',   # any name that ends in period (.) followed by exactly 3 digits
+            r'\.\d\d\d$',           # any name that ends in period (.) followed by exactly 3 digits
         ],
     },
 
-    'material names': {     # checks bpy.data.materials for avoided names or misspellings
+    'material names': {             # checks bpy.data.materials for avoided names or misspellings
         'check avoided': True,
         'check spelling': True,
-        'regexes': [        # these are regular expressions to check against names
+        'regexes': [                # these are regular expressions to check against names
             r'^Material$',
-            r"\.\d\d\d$",   # any name that ends in period (.) followed by exactly 3 digits
+            r"\.\d\d\d$",           # any name that ends in period (.) followed by exactly 3 digits
         ],
     },
 
-    'single image BSDF': {  # checks for special case where Principled BSDF Node has exactly one image input
+    'single image BSDF': {          # checks for special case where Principled BSDF Node has exactly one image input
         'check': True,
     },
 }
@@ -179,13 +180,19 @@ class Report:
             ]
             report.add_result('orphaned images', orphaned_images)
 
-        if config['library images']['check']:
-            library_images = [
-                f'{img.name}: {img.library.filepath}'
-                for img in bpy.data.images
-                if img.library and (bad_file(img.filepath) or bad_file(img.library.filepath))
+        if config['missing libraries']['check']:
+            bad_libraries = [
+                f'{lib.name}: {lib.filepath}'
+                for lib in bpy.data.libraries
+                if bad_file(lib.filepath)
             ]
-            report.add_result('library images', library_images)
+            report.add_result('missing libraries', bad_libraries)
+            # library_images = [
+            #     f'{img.name}: {img.library.filepath}'
+            #     for img in bpy.data.images
+            #     if img.library and (bad_file(img.filepath) or bad_file(img.library.filepath))
+            # ]
+            # report.add_result('library images', library_images)
 
 
 
