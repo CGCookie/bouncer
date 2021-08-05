@@ -80,7 +80,7 @@ config = {
         'check spelling': True,
         'regexes': [                # these are regular expressions to check against names
             r'^Material$',
-            r"\.\d\d\d$",           # any name that ends in period (.) followed by exactly 3 digits
+            r'\.\d\d\d$',           # any name that ends in period (.) followed by exactly 3 digits
         ],
     },
 
@@ -230,7 +230,7 @@ class Report:
                     if any(re.search(regex, mat.name) for regex in regexes)
                 ]
             if config['material names']['check spelling']:
-                bad_words = [
+                bad_words += [
                     f'{mat.name}'
                     for mat in bpy.data.materials
                     if not good_spelling(mat.name)
