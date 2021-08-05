@@ -51,7 +51,7 @@ config = {
                                     # etc.---should have a unique, descriptive name) or misspellings
         'check avoided': True,
         'check spelling': True,
-        'types': [          # check only specific types of objects
+        'types': [                  # check only specific types of objects
             'CURVE',
             'LATTICE',
             'CAMERA',
@@ -72,6 +72,8 @@ config = {
             r'^Torus$',
             r'^Empty$',
             r'\.\d\d\d$',           # any name that ends in period (.) followed by exactly 3 digits
+            r'^ +',                 # leading spaces are sus
+            r' +$',                 # trailing spaces are even more sus
         ],
     },
 
@@ -81,6 +83,8 @@ config = {
         'regexes': [                # these are regular expressions to check against names
             r'^Material$',
             r'\.\d\d\d$',           # any name that ends in period (.) followed by exactly 3 digits
+            r'^ +',                 # leading spaces are sus
+            r' +$',                 # trailing spaces are even more sus
         ],
     },
 
@@ -167,14 +171,14 @@ class Report:
                     if bad_file(img.filepath)
                 ]
             unpacked_images = [
-                f'{img.name}: {img.filepath}'
+                f'"{img.name}": {img.filepath}'
                 for img in unpacked_images
             ]
             report.add_result('unpacked images', unpacked_images)
 
         if config['orphaned images']['check']:
             orphaned_images = [
-                f'{img.name}: {img.filepath}'
+                f'"{img.name}": {img.filepath}'
                 for img in bpy.data.images
                 if not img.users
             ]
@@ -182,7 +186,7 @@ class Report:
 
         if config['missing libraries']['check']:
             bad_libraries = [
-                f'{lib.name}: {lib.filepath}'
+                f'"{lib.name}": {lib.filepath}'
                 for lib in bpy.data.libraries
                 if bad_file(lib.filepath)
             ]
@@ -208,13 +212,13 @@ class Report:
             bad_words = []
             if config['object names']['check avoided']:
                 bad_words += [
-                    f'{obj.name}'
+                    f'"{obj.name}"'
                     for obj in objs
                     if any(re.search(regex, obj.name) for regex in regexes)
                 ]
             if config['object names']['check spelling']:
-                bad_words = [
-                    f'{obj.name}'
+                bad_words += [
+                    f'"{obj.name}"'
                     for obj in objs
                     if not good_spelling(obj.name)
                 ]
@@ -225,13 +229,13 @@ class Report:
             bad_words = []
             if config['material names']['check avoided']:
                 bad_words += [
-                    f'{mat.name}'
+                    f'"{mat.name}"'
                     for mat in bpy.data.materials
                     if any(re.search(regex, mat.name) for regex in regexes)
                 ]
             if config['material names']['check spelling']:
                 bad_words += [
-                    f'{mat.name}'
+                    f'"{mat.name}"'
                     for mat in bpy.data.materials
                     if not good_spelling(mat.name)
                 ]
@@ -239,7 +243,7 @@ class Report:
 
         if config['single image BSDF']['check']:
             materials = [
-                f'{material.name}'
+                f'"{material.name}"'
                 for material in bpy.data.materials
                 if material.node_tree
                 for node in material.node_tree.nodes

@@ -24,21 +24,21 @@ import bpy
 from .main import Report
 
 bl_info = {
-    "name":        "Blender Market Testers",
+    "name":        "Bouncer",
     "description": "A testing suite for automating the Blender Market product review process",
     "author":      "Jonathan Denning and Matthew Muldoon",
     "version":     (0, 0, 1),
     "blender":     (2, 83, 0),
     "location":    "View 3D > Header",
-    "doc_url":     "https://github.com/CGCookie/market-testers/blob/main/README.md",
-    "tracker_url": "https://github.com/CGCookie/market-testers/issues",
+    "doc_url":     "https://github.com/CGCookie/bouncer/blob/main/README.md",
+    "tracker_url": "https://github.com/CGCookie/bouncer/issues",
     "category":    "3D View",
 }
 
 
 class BlenderMarket_Tester(bpy.types.Operator):
-    bl_idname = "cgcookie.blendermarket_tester"
-    bl_label = "BM: Run Review Testers"
+    bl_idname = "cgcookie.bouncer"
+    bl_label = "Bouncer: Run Review Testers"
     bl_description = "A testing suite for automating the Blender Market product review process"
     bl_space_type = "EMPTY"
     # bl_region_type = ""
@@ -75,7 +75,7 @@ def override_topbar():
     undo_override_topbar()
     def new_draw_left(self, context):
         layout = self.layout
-        layout.operator('cgcookie.blendermarket_tester', text='', icon='SCRIPTPLUGINS')
+        layout.operator('cgcookie.bouncer', text='', icon='SCRIPTPLUGINS')
         override_orig(self, context)
     override_orig = bpy.types.TOPBAR_HT_upper_bar.draw_left
     bpy.types.TOPBAR_HT_upper_bar.draw_left = new_draw_left
