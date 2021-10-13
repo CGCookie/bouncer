@@ -61,17 +61,17 @@ config = {
             'ARMATURE',
             'SURFACE',
         ],
-        'regexes': [                # these are regular expressions to check against names
-            r'^Plane$',
-            r'^Cube$',
-            r'^Circle$',
-            r'^Sphere$',
-            r'^Icosphere$',
-            r'^Cylinder$',
-            r'^Cone$',
-            r'^Torus$',
-            r'^Empty$',
-            r'\.\d\d\d$',           # any name that ends in period (.) followed by exactly 3 digits
+        'regexes': [                # these are regular expressions to check against names (case insensitive!)
+            r'plane',
+            r'cube',
+            r'circle',
+            r'sphere',
+            r'icosphere',
+            r'cylinder',
+            r'cone',
+            r'torus',
+            r'empty',
+            r'\d{3,}$',             # any name that ends with at least 3 digits
             r'^ +',                 # leading spaces are sus
             r' +$',                 # trailing spaces are even more sus
         ],
@@ -80,9 +80,9 @@ config = {
     'material names': {             # checks bpy.data.materials for avoided names or misspellings
         'check avoided': True,
         'check spelling': True,
-        'regexes': [                # these are regular expressions to check against names
-            r'^Material$',
-            r'\.\d\d\d$',           # any name that ends in period (.) followed by exactly 3 digits
+        'regexes': [                # these are regular expressions to check against names (case insensitive!)
+            r'^material$',
+            r'\d{3,}$',             # any name that ends in at least 3 digits
             r'^ +',                 # leading spaces are sus
             r' +$',                 # trailing spaces are even more sus
         ],
@@ -211,10 +211,14 @@ class Report:
             objs = [obj for obj in bpy.data.objects if obj.type in types]
             bad_words = []
             if config['object names']['check avoided']:
+                # print([
+                #     (obj.name, next(re.search(regex, obj.name) for regex in regexes))
+                #     for obj in objs
+                #     ])
                 bad_words += [
                     f'"{obj.name}"'
                     for obj in objs
-                    if any(re.search(regex, obj.name) for regex in regexes)
+                    if any(re.search(regex, obj.name.lower()) for regex in regexes)
                 ]
             if config['object names']['check spelling']:
                 bad_words += [
@@ -231,7 +235,7 @@ class Report:
                 bad_words += [
                     f'"{mat.name}"'
                     for mat in bpy.data.materials
-                    if any(re.search(regex, mat.name) for regex in regexes)
+                    if any(re.search(regex, mat.name.lower()) for regex in regexes)
                 ]
             if config['material names']['check spelling']:
                 bad_words += [
