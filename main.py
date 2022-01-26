@@ -29,6 +29,13 @@ config = {
 
     'reporting options': {
         'label width': 20,
+
+        # https://www.asciiart.eu/art-and-design/dividers
+        'divider style': '^-',  # '=', '-', '^-', '+-', '--/\\/', '--<>',
+        'divider width': 50,
+
+        'squash singleton lists': False,    # True=lists with one item are reported on a single line
+                                            # False=all non-empty lists are reported on multiple lines
     },
 
     #########################################################
@@ -96,6 +103,10 @@ config = {
 label_width = config['reporting options']['label width']
 label_spaces = ' '*label_width
 
+divider_width = config['reporting options']['divider width']
+divider_style = config['reporting options']['divider style']
+
+
 # english words from https://github.com/dwyl/english-words
 english_words = {
     re.sub(r'\d', '', word.strip().lower())
@@ -123,79 +134,138 @@ class Report:
         return '\n'.join(self._lines)
 
     def print(self, s):
-        self._lines += [s]
+        if s != '' and not bool(s):
+            pass
+        elif type(s) is str:
+            self._lines += [s]
+        elif type(s) is list:
+            for l in s:
+                self.print(l)
+        elif type(s) is tuple:
+            for l in s:
+                self.print(l)
+        else:
+            self.print(str(s))
 
-    def hr(self):
-        self._lines += [f'---={"-"*label_width}=-------------------------']
+    def nl(self, *, count=1):
+        for _ in range(count):
+            self.print('')
+
+    def hr(self, *, style=None):
+        global divider_width, divider_style
+
+        if style is None: style = divider_style
+        divider = (style * int(divider_width / len(style) + 1))[:divider_width]
+        self.print(divider)
+        # self._lines += [f'---={"-"*label_width}=-------------------------']
+
+    def add_section_header(self, label):
+        global divider_width
+
+        self.nl(count=2)
+        self.print(label)
+        self.hr(style="=")
+
+    def add_subsection_header(self, label):
+        global divider_width
+        self.nl()
+        self.print(label)
+        self.print('-' * divider_width)
+
+    def add_subsection_ending(self):
+        global divider_width
+        self.print('-'*divider_width)
 
     def add_result(self, label, data):
+        global label_width, label_spaces
         check = 'XXX' if data else ' + '
-        result = f': {data}' if data else ''
-        label = f'{label}{label_spaces}'[:max(len(label), label_width)]
+        spaces = ' ' * max(label_width - len(label), 0)
 
-        if not data:
-            self.print(f'{check} {label} ...(nothing found)...')
+        if not bool(data):
+            self.print(f'{check} {label}{spaces} ...(nothing found)...')
 
         elif type(data) is list:
-            data = sorted(data)
+            if config['reporting options']['squash singleton lists'] and len(data) == 1:
+                self.add_result(label, data[0])
+            else:
+                self.add_subsection_header(f'{check} {label}')
+                data = sorted(data)
+                for datum in data:
+                    self.print(datum)
+                self.add_subsection_ending()
+                self.nl()
+
+        elif type(data) is tuple:
+            self.add_subsection_header(f'{check} {label}')
             for datum in data:
-                self.print(f'{check} {label} {datum}')
-                check = '   '
-                label = label_spaces
+                self.print(datum)
+            self.add_subsection_ending()
+            self.nl()
 
         else:
-            self.print(f'{check} {label} {data}')
+            self.print(f'{check} {label}{spaces} {data}')
 
     @staticmethod
     def run():
         report = Report()
-        report.print(f'Bouncer Report\n')
+        report.hr()
+        report.print(f'Bouncer Report')
 
 
         ##########################################
         # the following are considered errors
 
-        report.hr()
+        # report.hr()
+        report.add_section_header('detected errors')
 
 
         if config['unpacked images']['check']:
+            # find all unpacked images
             unpacked_images = [
                 img
                 for img in bpy.data.images
                 if img.filepath and img.users and not img.packed_file
             ]
             if config['unpacked images']['ok if file exists']:
+                # only consider unpacked images if image file does not exist
                 unpacked_images = [
                     img
                     for img in unpacked_images
                     if bad_file(img.filepath)
                 ]
-            unpacked_images = [
-                f'"{img.name}": {img.filepath}'
+            # report!
+            report.add_result('unpacked images', [
+                (img.name, img.filepath)
                 for img in unpacked_images
-            ]
-            report.add_result('unpacked images', unpacked_images)
+            ])
 
         if config['orphaned images']['check']:
+            # find orphaned images
             orphaned_images = [
-                f'"{img.name}": {img.filepath}'
+                (img.name, img.filepath)
                 for img in bpy.data.images
                 if not img.users
             ]
+            # report!
             report.add_result('orphaned images', orphaned_images)
 
         if config['missing libraries']['check']:
+            # find missing libraries
             bad_libraries = [
-                f'"{lib.name}": {lib.filepath}'
+                (lib.name, lib.filepath)
                 for lib in bpy.data.libraries
                 if bad_file(lib.filepath)
             ]
+            # report!
             report.add_result('missing libraries', bad_libraries)
+
+            # # find missing library images
             # library_images = [
             #     f'{img.name}: {img.library.filepath}'
             #     for img in bpy.data.images
             #     if img.library and (bad_file(img.filepath) or bad_file(img.library.filepath))
             # ]
+            # # report!
             # report.add_result('library images', library_images)
 
 
@@ -203,7 +273,9 @@ class Report:
         ############################################
         # the following are considered warnings
 
-        report.hr()
+        # report.hr()
+        report.add_section_header('detected warnings')
+
 
         if config['object names']['check avoided'] or config['object names']['check spelling']:
             types = config['object names']['types']
@@ -258,8 +330,9 @@ class Report:
             ]
             report.add_result('single image BSDF', materials)
 
+        report.nl(count=2)
         report.hr()
-        report.print(f'\ndone!')
+        report.nl()
 
 
         # steps
